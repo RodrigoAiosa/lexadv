@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty with context %}
+{% block title %}Administração — LEX{% endblock %}
+
+{% macro lawyer_row(lw, actions) %}
+  <tr>
+    <td><strong>{{ lw.profiles.full_name if lw.profiles else '—' }}</strong><br><span class="small muted">{{ lw.city or '' }}{{ ' / ' + lw.state if lw.state }}</span></td>
+    <td>OAB/{{ lw.oab_state }} {{ lw.oab_number }}</td>
+    <td><span class="badge badge--v-{{ lw.verification_status }}">{{ L.VERIFICATION[lw.verification_status] }}</span></td>
+    <td>{{ lw.created_at|datebr('%d/%m/%Y') }}</td>
+    <td>
+      <form method="post" action="{{ url_for('admin.set_verification', lawyer_id=lw.profile_id) }}" class="actions">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% for value, label, cls in actions %}
+          <button class="btn btn--sm {{ cls }}" name="action" value="{{ value }}" type="submit">{{ label }}</button>
+        {% endfor %}
+      </form>
+    </td>
+  </tr>
+{% endmacro %}
+
+{% block content %}
+<section class="section">
+  <div class="container">
+    <h1>Verificação de advogados</h1>
+    <p class="muted">Confira a inscrição na OAB (consulta nacional da OAB) antes de aprovar.</p>
+
+    <h2>Aguardando análise ({{ pending|length }})</h2>
+    {% if pending %}
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>Advogado</th><th>Inscrição</th><th>Status</th><th>Cadastro</th><th>Ações</th></tr></thead>
+        <tbody>{% for lw in pending %}{{ lawyer_row(lw, [('verificar', 'Verificar', 'btn--gold'), ('rejeitar', 'Rejeitar', 'btn--ghost')]) }}{% endfor %}</tbody>
+      </table></div>
+    {% else %}
+      {{ empty("Nada pendente", "Nenhum advogado aguardando verificação.") }}
+    {% endif %}
+
+    <h2>Demais advogados</h2>
+    {% if others %}
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>Advogado</th><th>Inscrição</th><th>Status</th><th>Cadastro</th><th>Ações</th></tr></thead>
+        <tbody>
+          {% for lw in others %}
+            {{ lawyer_row(lw, [('suspender', 'Suspender', 'btn--ghost')] if lw.verification_status == 'verificado' else [('verificar', 'Verificar', 'btn--gold')]) }}
+          {% endfor %}
+        </tbody>
+      </table></div>
+    {% else %}
+      <p class="muted">Nenhum outro advogado cadastrado.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

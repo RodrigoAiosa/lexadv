@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block body_class %}page-home{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="container hero-inner">
+    <div class="hero-copy">
+      <p class="eyebrow">Plataforma jurídica</p>
+      <h1>O advogado certo para o seu problema, sem procurar.</h1>
+      <p class="lead">Conte o que aconteceu — processo trabalhista, divórcio, problema com o plano de saúde, cobrança indevida. O LEX direciona o seu caso para advogados verificados e especialistas naquela área.</p>
+      <div class="hero-cta">
+        <a class="btn btn--gold btn--lg" href="{{ url_for('auth.register', perfil='cliente') }}">Preciso de um advogado</a>
+        <a class="btn btn--outline btn--lg" href="{{ url_for('auth.register', perfil='advogado') }}">Sou advogado(a)</a>
+      </div>
+      <ul class="hero-points">
+        <li>Cadastro gratuito para clientes</li>
+        <li>OAB verificada</li>
+        <li>Chat e documentos em um só lugar</li>
+      </ul>
+    </div>
+    <aside class="hero-card" aria-label="Exemplo de solicitação">
+      <p class="eyebrow">Exemplo de solicitação</p>
+      <h2>Fui demitido sem receber as verbas rescisórias</h2>
+      <dl>
+        <div><dt>Área</dt><dd>Direito Trabalhista</dd></div>
+        <div><dt>Urgência</dt><dd>Alta</dd></div>
+        <div><dt>Direcionado a</dt><dd>3 advogados especialistas</dd></div>
+      </dl>
+      <div class="hero-card__status"><span class="dot"></span> Advogado(a) aceitou o caso</div>
+    </aside>
+  </div>
+</section>
+
+<section id="como-funciona" class="section">
+  <div class="container">
+    <h2 class="section-title">Como funciona</h2>
+    <ol class="steps">
+      <li><span class="steps__n">1</span><h3>Conte seu problema</h3><p>Crie sua conta e descreva a situação, escolhendo a área do direito e a urgência.</p></li>
+      <li><span class="steps__n">2</span><h3>Direcionamos ao especialista</h3><p>O sistema indica advogados verificados da área, considerando especialidade, região e avaliações.</p></li>
+      <li><span class="steps__n">3</span><h3>Resolva com acompanhamento</h3><p>O primeiro advogado que aceitar assume o caso. Converse, envie documentos e agende reuniões na plataforma.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section id="areas" class="section section--tint">
+  <div class="container">
+    <h2 class="section-title">Áreas de atuação</h2>
+    {% if areas %}
+      <ul class="areas">
+        {% for area in areas %}
+          <li class="area"><h3>{{ area.name }}</h3><p class="muted">{{ area.description }}</p></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Trabalhista, Civil, Família, Criminal, Consumidor, Previdenciário e muito mais.</p>
+    {% endif %}
+  </div>
+</section>
+
+<section class="section">
+  <div class="container split">
+    <div class="split__col">
+      <h2>Para quem precisa de ajuda</h2>
+      <p>Sem ficar pesquisando escritório por escritório. Descreva uma vez e acompanhe tudo pelo painel: status, mensagens, documentos, honorários combinados e agenda.</p>
+      <a class="btn btn--gold" href="{{ url_for('auth.register', perfil='cliente') }}">Criar conta de cliente</a>
+    </div>
+    <div class="split__col">
+      <h2>Para advogados</h2>
+      <p>Receba solicitações compatíveis com as suas especialidades e a sua região. Aceite os casos que fazem sentido, envie propostas de honorários e construa a sua reputação com avaliações.</p>
+      <a class="btn btn--navy" href="{{ url_for('auth.register', perfil='advogado') }}">Criar conta de advogado</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

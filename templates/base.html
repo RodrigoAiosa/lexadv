@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="theme-color" content="#0f1b33">
+  <title>{% block title %}LEX — O advogado certo para o seu problema{% endblock %}</title>
+  <meta name="description" content="{% block description %}Conte seu problema jurídico e seja direcionado a advogados especialistas na área.{% endblock %}">
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="{{ url_for('main.index') }}" aria-label="LEX — página inicial">
+        <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><path d="M16 4v22M7 26h18M6 10h20M6 10l-3.5 8a3.5 3.5 0 0 0 7 0L6 10zm20 0l-3.5 8a3.5 3.5 0 0 0 7 0L26 10z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>LEX</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="menu" data-nav-toggle>
+        <span class="sr-only">Abrir menu</span><span class="bars" aria-hidden="true"></span>
+      </button>
+      <nav id="menu" class="nav" aria-label="Principal">
+        {% if user %}
+          {% if user.role == 'cliente' %}
+            <a href="{{ url_for('client.dashboard') }}">Minhas solicitações</a>
+            <a href="{{ url_for('client.new_case') }}">Nova solicitação</a>
+          {% elif user.role == 'advogado' %}
+            <a href="{{ url_for('lawyer.dashboard') }}">Painel</a>
+            <a href="{{ url_for('lawyer.profile') }}">Meu perfil</a>
+          {% elif user.role == 'admin' %}
+            <a href="{{ url_for('admin.dashboard') }}">Administração</a>
+          {% endif %}
+          <a class="nav-bell" href="{{ url_for('main.notifications') }}" data-notifications-url="{{ url_for('api.notifications_count') }}">
+            Notificações <span class="pill" data-notifications-badge hidden>0</span>
+          </a>
+          <span class="nav-user">{{ user.full_name or user.email }}</span>
+          <form method="post" action="{{ url_for('auth.logout') }}" class="inline-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn--ghost btn--sm" type="submit">Sair</button>
+          </form>
+        {% else %}
+          <a href="{{ url_for('main.index') }}#como-funciona">Como funciona</a>
+          <a href="{{ url_for('main.index') }}#areas">Áreas</a>
+          <a href="{{ url_for('auth.login') }}">Entrar</a>
+          <a class="btn btn--gold btn--sm" href="{{ url_for('auth.register') }}">Criar conta</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="container flash-stack" role="status">
+        {% for category, message in messages %}
+          <div class="flash flash--{{ category }}">
+            <span>{{ message }}</span>
+            <button type="button" class="flash-close" aria-label="Fechar aviso" data-flash-close>&times;</button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <main id="conteudo">{% block content %}{% endblock %}</main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>
+        <strong class="brand-inline">LEX</strong>
+        <p>Plataforma que conecta pessoas a advogados especialistas.</p>
+      </div>
+      <p class="footer-note">O LEX é uma plataforma de intermediação e não presta assessoria jurídica. A inscrição dos advogados na OAB é verificada pela nossa equipe.</p>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

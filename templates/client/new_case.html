@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Nova solicitação — LEX{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container narrow">
+    <h1>Nova solicitação</h1>
+    <p class="muted">Quanto mais detalhes, melhor o direcionamento. Não inclua senhas ou dados bancários.</p>
+
+    <form method="post" class="card form-card" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <label class="field"><span>Área do direito</span>
+        <select name="area_id" required>
+          <option value="">Selecione…</option>
+          {% for area in areas %}
+            <option value="{{ area.id }}" {{ 'selected' if form.get('area_id')|string == area.id|string }}>{{ area.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="field"><span>Título</span>
+        <input type="text" name="title" maxlength="200" value="{{ form.get('title', '') }}" placeholder="Ex.: Demissão sem pagamento das verbas rescisórias" required>
+      </label>
+
+      <label class="field"><span>Descreva o que aconteceu</span>
+        <textarea name="description" rows="7" minlength="20" data-counter required>{{ form.get('description', '') }}</textarea>
+        <small class="muted"><span data-counter-out>0</span> caracteres (mínimo 20)</small>
+      </label>
+
+      <div class="grid-2">
+        <label class="field"><span>Urgência</span>
+          <select name="urgency">
+            {% for key, label in L.URGENCY.items() %}
+              <option value="{{ key }}" {{ 'selected' if (form.get('urgency') or 'media') == key }}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="field"><span>Valor envolvido (R$) <small class="muted">opcional</small></span>
+          <input type="text" inputmode="decimal" name="estimated_value" value="{{ form.get('estimated_value', '') }}" placeholder="0,00">
+        </label>
+      </div>
+
+      <div class="grid-2">
+        <label class="field"><span>Cidade</span>
+          <input type="text" name="city" value="{{ form.get('city', '') }}">
+        </label>
+        <label class="field"><span>Estado</span>
+          <select name="state">
+            <option value="">—</option>
+            {% for uf in STATES %}<option {{ 'selected' if form.get('state') == uf }}>{{ uf }}</option>{% endfor %}
+          </select>
+        </label>
+      </div>
+
+      <label class="field"><span>Parte contrária <small class="muted">opcional</small></span>
+        <input type="text" name="opposing_party" value="{{ form.get('opposing_party', '') }}" placeholder="Empresa, pessoa, órgão…">
+      </label>
+      <label class="field"><span>O que você espera como resultado? <small class="muted">opcional</small></span>
+        <textarea name="desired_outcome" rows="3">{{ form.get('desired_outcome', '') }}</textarea>
+      </label>
+      <label class="check">
+        <input type="checkbox" name="is_online_ok" value="1" {{ 'checked' if form.get('is_online_ok') }}>
+        <span>Aceito atendimento 100% online</span>
+      </label>
+
+      <button class="btn btn--gold btn--block" type="submit">Enviar solicitação</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

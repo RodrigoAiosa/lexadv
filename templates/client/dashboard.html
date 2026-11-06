@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_macros.html" import case_card, empty with context %}
+{% block title %}Minhas solicitações — LEX{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container">
+    <div class="page-head">
+      <div>
+        <h1>Olá, {{ (user.full_name or 'cliente').split(' ')[0] }}</h1>
+        <p class="muted">{{ active_count }} solicitação(ões) em andamento · {{ cases|length }} no total</p>
+      </div>
+      <a class="btn btn--gold" href="{{ url_for('client.new_case') }}">+ Nova solicitação</a>
+    </div>
+
+    {% if cases %}
+      <div class="grid-cards">
+        {% for case in cases %}{{ case_card(case) }}{% endfor %}
+      </div>
+    {% else %}
+      {% call empty("Você ainda não tem solicitações", "Descreva seu problema e nós direcionamos para advogados especialistas.") %}
+        <a class="btn btn--navy" href="{{ url_for('client.new_case') }}">Criar a primeira solicitação</a>
+      {% endcall %}
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

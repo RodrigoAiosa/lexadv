@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Perfil profissional — LEX{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container narrow">
+    <h1>{{ 'Perfil profissional' if lawyer else 'Complete seu perfil profissional' }}</h1>
+    <p class="muted">Estas informações aparecem para os clientes e definem quais solicitações você recebe.</p>
+
+    <form method="post" class="card form-card" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="grid-2">
+        <label class="field"><span>Número da OAB</span>
+          <input type="text" name="oab_number" value="{{ form.get('oab_number', '') }}" placeholder="123456" {{ 'readonly' if lawyer else 'required' }}></label>
+        <label class="field"><span>Estado da inscrição</span>
+          {% if lawyer %}
+            <input type="text" value="{{ lawyer.oab_state }}" readonly>
+          {% else %}
+            <select name="oab_state" required>
+              <option value="">Selecione…</option>
+              {% for uf in STATES %}<option {{ 'selected' if form.get('oab_state') == uf }}>{{ uf }}</option>{% endfor %}
+            </select>
+          {% endif %}
+        </label>
+      </div>
+      {% if lawyer %}<p class="small muted">Para corrigir o número da OAB, fale com o suporte (a inscrição é verificada pela equipe).</p>{% endif %}
+
+      <label class="field"><span>Apresentação</span>
+        <textarea name="bio" rows="5" placeholder="Conte sua trajetória, tipos de casos e diferenciais.">{{ form.get('bio', '') }}</textarea></label>
+
+      <fieldset class="field">
+        <legend>Áreas de atuação</legend>
+        <p class="small muted">Marque as áreas em que atua e escolha a principal.</p>
+        <ul class="area-picker">
+          {% for area in areas %}
+            <li>
+              <label class="check"><input type="checkbox" name="areas" value="{{ area.id }}" {{ 'checked' if area.id in selected }}><span>{{ area.name }}</span></label>
+              <label class="radio-mini"><input type="radio" name="primary_area" value="{{ area.id }}" {{ 'checked' if primary == area.id }}><span>principal</span></label>
+            </li>
+          {% endfor %}
+        </ul>
+      </fieldset>
+
+      <div class="grid-2">
+        <label class="field"><span>Anos de experiência</span>
+          <input type="number" min="0" max="70" name="years_experience" value="{{ form.get('years_experience', '') }}"></label>
+        <label class="field"><span>Valor da hora (R$)</span>
+          <input type="text" inputmode="decimal" name="hourly_rate" value="{{ form.get('hourly_rate', '') }}" placeholder="0,00"></label>
+      </div>
+      <div class="grid-2">
+        <label class="field"><span>Cidade</span><input type="text" name="city" value="{{ form.get('city', '') }}"></label>
+        <label class="field"><span>Estado de atuação</span>
+          <select name="state">
+            <option value="">—</option>
+            {% for uf in STATES %}<option {{ 'selected' if form.get('state') == uf }}>{{ uf }}</option>{% endfor %}
+          </select></label>
+      </div>
+      <label class="check"><input type="checkbox" name="accepts_online" value="1" {{ 'checked' if form.get('accepts_online') }}><span>Atendo clientes de forma online</span></label>
+      {% if lawyer %}
+        <label class="check"><input type="checkbox" name="is_available" value="1" {{ 'checked' if form.get('is_available') }}><span>Disponível para receber novas solicitações</span></label>
+      {% endif %}
+
+      <button class="btn btn--gold btn--block" type="submit">Salvar perfil</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

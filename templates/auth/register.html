@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Criar conta — LEX{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container narrow">
+    <div class="card form-card">
+      <h1>Criar conta</h1>
+      <form method="post" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <fieldset class="role-switch">
+          <legend class="sr-only">Tipo de conta</legend>
+          <label class="role-option">
+            <input type="radio" name="role" value="cliente" {{ 'checked' if preset == 'cliente' }}>
+            <span><strong>Sou cliente</strong><small>Preciso de um advogado</small></span>
+          </label>
+          <label class="role-option">
+            <input type="radio" name="role" value="advogado" {{ 'checked' if preset == 'advogado' }}>
+            <span><strong>Sou advogado(a)</strong><small>Quero receber casos</small></span>
+          </label>
+        </fieldset>
+
+        <label class="field"><span>Nome completo</span>
+          <input type="text" name="full_name" autocomplete="name" value="{{ form.get('full_name', '') }}" required></label>
+        <label class="field"><span>E-mail</span>
+          <input type="email" name="email" autocomplete="email" value="{{ form.get('email', '') }}" required></label>
+        <label class="field"><span>Telefone / WhatsApp <small class="muted">(opcional)</small></span>
+          <input type="tel" name="phone" autocomplete="tel" value="{{ form.get('phone', '') }}"></label>
+        <div class="grid-2">
+          <label class="field"><span>Senha</span>
+            <input type="password" name="password" autocomplete="new-password" minlength="8" required>
+            <small class="muted">Mínimo de 8 caracteres.</small></label>
+          <label class="field"><span>Confirmar senha</span>
+            <input type="password" name="password_confirm" autocomplete="new-password" minlength="8" required></label>
+        </div>
+        <label class="check">
+          <input type="checkbox" name="terms" value="1" required>
+          <span>Li e aceito os termos de uso e a política de privacidade (LGPD).</span>
+        </label>
+        <button class="btn btn--gold btn--block" type="submit">Criar conta</button>
+      </form>
+      <p class="muted center">Já tem conta? <a href="{{ url_for('auth.login') }}">Entrar</a></p>
+    </div>
+  </div>
+</section>
+{% endblock %}

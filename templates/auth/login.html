@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Entrar — LEX{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container narrow">
+    <div class="card form-card">
+      <h1>Entrar</h1>
+      <form method="post" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label class="field">
+          <span>E-mail</span>
+          <input type="email" name="email" autocomplete="email" required autofocus>
+        </label>
+        <label class="field">
+          <span>Senha</span>
+          <input type="password" name="password" autocomplete="current-password" required>
+        </label>
+        <button class="btn btn--navy btn--block" type="submit">Entrar</button>
+      </form>
+      <p class="muted center">Ainda não tem conta? <a href="{{ url_for('auth.register') }}">Cadastre-se</a></p>
+    </div>
+  </div>
+</section>
+{% endblock %}

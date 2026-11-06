@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, urgency_badge, stars, empty with context %}
+{% block title %}{{ case.title }} — LEX{% endblock %}
+
+{% block content %}
+{% set open_case = case.status in ['aberto', 'aguardando_advogado', 'em_andamento'] %}
+{% set assigned = case.assigned_lawyer_id is not none %}
+{% set participant = is_client or is_lawyer or is_admin %}
+
+<section class="section">
+  <div class="container">
+    <p class="small"><a href="{{ url_for('main.painel') }}">&larr; Voltar ao painel</a></p>
+
+    <div class="page-head">
+      <div>
+        <p class="muted mono">{{ case.protocol }}</p>
+        <h1>{{ case.title }}</h1>
+        <p class="muted">
+          {{ case.legal_areas.name if case.legal_areas }} · {{ urgency_badge(case.urgency) }} ·
+          criada em {{ case.created_at|datebr }}
+        </p>
+      </div>
+      <div>{{ status_badge(case.status) }}</div>
+    </div>
+
+    <div class="layout">
+      <div class="layout__main">
+
+        <div class="card">
+          <h2>Descrição</h2>
+          <p class="prewrap">{{ case.description }}</p>
+          <dl class="meta">
+            {% if case.city or case.state %}<div><dt>Local</dt><dd>{{ case.city or '' }}{{ ' / ' + case.state if case.state }}</dd></div>{% endif %}
+            {% if case.estimated_value %}<div><dt>Valor envolvido</dt><dd>{{ case.estimated_value|money }}</dd></div>{% endif %}
+            {% if case.opposing_party %}<div><dt>Parte contrária</dt><dd>{{ case.opposing_party }}</dd></div>{% endif %}
+            {% if case.desired_outcome %}<div><dt>Resultado esperado</dt><dd class="prewrap">{{ case.desired_outcome }}</dd></div>{% endif %}
+            <div><dt>Atendimento online</dt><dd>{{ 'Aceita' if case.is_online_ok else 'Prefere presencial' }}</dd></div>
+          </dl>
+        </div>
+
+        {% if pending_match and not assigned %}
+          <div class="card card--highlight">
+            <h2>Você foi indicado para esta solicitação</h2>
+            <p>Se aceitar, você ficará responsável pelo caso e poderá conversar com o cliente.</p>
+            <form method="post" action="{{ url_for('lawyer.respond', match_id=pending_match.id) }}" class="actions">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="case_id" value="{{ case.id }}">
+              <button class="btn btn--gold" name="action" value="aceitar" type="submit" data-confirm="Aceitar esta solicitação?">Aceitar caso</button>
+              <button class="btn btn--ghost" name="action" value="recusar" type="submit">Recusar</button>
+            </form>
+          </div>
+        {% endif %}
+
+        {% if participant %}
+
+          {# ---------- Chat ---------- #}
+          <div class="card" id="chat-card">
+            <h2>Conversa</h2>
+            {% if assigned %}
+              <div class="chat" data-chat
+                   data-messages-url="{{ url_for('api.list_messages', case_id=case.id) }}"
+                   data-send-url="{{ url_for('api.send_message', case_id=case.id) }}">
+                <ul class="chat__list" data-chat-list aria-live="polite">
+                  {% for m in messages %}
+                    <li class="msg {{ 'msg--mine' if m.sender_id == user.id else 'msg--other' }}" data-id="{{ m.id }}" data-created="{{ m.created_at }}">
+                      <p class="prewrap">{{ m.body }}</p><time>{{ m.created_at|datebr }}</time>
+                    </li>
+                  {% endfor %}
+                </ul>
+                {% if not is_admin and case.status != 'cancelado' %}
+                  <form class="chat__form" data-chat-form>
+                    <label class="sr-only" for="chat-input">Mensagem</label>
+                    <textarea id="chat-input" rows="2" maxlength="5000" placeholder="Escreva sua mensagem…" required></textarea>
+                    <button class="btn btn--navy" type="submit">Enviar</button>
+                  </form>
+                {% endif %}
+                <p class="small error-text" data-chat-error hidden></p>
+              </div>
+            {% else %}
+              <p class="muted">O chat é liberado assim que um advogado aceitar a solicitação.</p>
+            {% endif %}
+          </div>
+
+          {# ---------- Documentos ---------- #}
+          <div class="card">
+            <h2>Documentos</h2>
+            {% if documents %}
+              <ul class="doc-list">
+                {% for d in documents %}
+                  <li>
+                    <a href="{{ url_for('cases.download_document', case_id=case.id, doc_id=d.id) }}">{{ d.file_name }}</a>
+                    <span class="small muted">{{ d.size_bytes|filesize }} · {{ d.created_at|datebr }}{{ ' · ' + d.category if d.category }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="muted">Nenhum documento enviado ainda.</p>
+            {% endif %}
+            {% if (is_client or is_lawyer) and open_case %}
+              <form method="post" enctype="multipart/form-data" action="{{ url_for('cases.upload_document', case_id=case.id) }}" class="inline-fields">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="file" name="arquivo" accept=".pdf,.jpg,.jpeg,.png,.txt,.doc,.docx" required>
+                <input type="text" name="category" placeholder="Categoria (ex.: contrato)" maxlength="60">
+                <button class="btn btn--outline btn--sm" type="submit">Enviar documento</button>
+              </form>
+              <p class="small muted">PDF, JPG, PNG, TXT ou Word — até 20 MB.</p>
+            {% endif %}
+          </div>
+
+          {# ---------- Honorários ---------- #}
+          {% if assigned %}
+          <div class="card">
+            <h2>Honorários</h2>
+            {% if fees %}
+              <ul class="fee-list">
+                {% for f in fees %}
+                  <li class="fee fee--{{ f.status }}">
+                    <div>
+                      <strong>{{ L.FEE_TYPES[f.fee_type] }}</strong>
+                      {% if f.amount %} · {{ f.amount|money }}{{ '/h' if f.fee_type == 'por_hora' }}{% endif %}
+                      {% if f.success_percent %} · {{ f.success_percent }}% de êxito{% endif %}
+                      <span class="badge badge--f-{{ f.status }}">{{ L.FEE_STATUS[f.status] }}</span>
+                      {% if f.notes %}<p class="small muted prewrap">{{ f.notes }}</p>{% endif %}
+                    </div>
+                    {% if is_client and f.status == 'proposta' %}
+                      <form method="post" action="{{ url_for('cases.respond_fee', case_id=case.id, fee_id=f.id) }}" class="actions">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn btn--gold btn--sm" name="action" value="aceitar" type="submit" data-confirm="Aceitar esta proposta de honorários?">Aceitar</button>
+                        <button class="btn btn--ghost btn--sm" name="action" value="recusar" type="submit">Recusar</button>
+                      </form>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="muted">Nenhuma proposta de honorários registrada.</p>
+            {% endif %}
+
+            {% if is_lawyer and case.status == 'em_andamento' %}
+              <details class="disclosure">
+                <summary>Enviar proposta de honorários</summary>
+                <form method="post" action="{{ url_for('cases.propose_fee', case_id=case.id) }}" class="form-stack">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <label class="field"><span>Tipo</span>
+                    <select name="fee_type" required>
+                      {% for key, label in fee_types.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+                    </select></label>
+                  <div class="grid-2">
+                    <label class="field"><span>Valor (R$)</span><input type="text" inputmode="decimal" name="amount" placeholder="0,00"></label>
+                    <label class="field"><span>Êxito (%)</span><input type="text" inputmode="decimal" name="success_percent" placeholder="0"></label>
+                  </div>
+                  <label class="field"><span>Observações</span><textarea name="notes" rows="2"></textarea></label>
+                  <button class="btn btn--navy btn--sm" type="submit">Enviar proposta</button>
+                </form>
+              </details>
+            {% endif %}
+          </div>
+
+          {# ---------- Agenda ---------- #}
+          <div class="card">
+            <h2>Reuniões</h2>
+            {% if appointments %}
+              <ul class="fee-list">
+                {% for a in appointments %}
+                  <li class="fee">
+                    <div>
+                      <strong>{{ a.scheduled_at|datebr }}</strong> · {{ a.duration_minutes }} min · {{ L.APPOINTMENT_MODES[a.mode] }}
+                      <span class="badge">{{ L.APPOINTMENT_STATUS[a.status] }}</span>
+                      {% if a.meeting_url %}<p class="small"><a href="{{ a.meeting_url }}" target="_blank" rel="noopener noreferrer">Link da reunião</a></p>{% endif %}
+                      {% if a.notes %}<p class="small muted">{{ a.notes }}</p>{% endif %}
+                    </div>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="muted">Nenhuma reunião agendada.</p>
+            {% endif %}
+            {% if (is_client or is_lawyer) and case.status == 'em_andamento' %}
+              <details class="disclosure">
+                <summary>Agendar reunião</summary>
+                <form method="post" action="{{ url_for('cases.schedule', case_id=case.id) }}" class="form-stack">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <div class="grid-2">
+                    <label class="field"><span>Data e hora (Brasília)</span><input type="datetime-local" name="scheduled_at" required></label>
+                    <label class="field"><span>Duração (min)</span><input type="number" name="duration_minutes" value="30" min="15" step="15"></label>
+                  </div>
+                  <div class="grid-2">
+                    <label class="field"><span>Formato</span>
+                      <select name="mode">{% for key, label in appointment_modes.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></label>
+                    <label class="field"><span>Link (se online)</span><input type="url" name="meeting_url" placeholder="https://…"></label>
+                  </div>
+                  <label class="field"><span>Observações</span><textarea name="notes" rows="2"></textarea></label>
+                  <button class="btn btn--navy btn--sm" type="submit">Agendar</button>
+                </form>
+              </details>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          {# ---------- Avaliação ---------- #}
+          {% if case.status == 'concluido' and assigned %}
+            <div class="card">
+              <h2>Avaliação</h2>
+              {% if review %}
+                <p>{{ stars(review.rating) }} <strong>{{ review.rating }}/5</strong></p>
+                {% if review.comment %}<p class="prewrap">{{ review.comment }}</p>{% endif %}
+              {% elif is_client %}
+                <form method="post" action="{{ url_for('cases.review', case_id=case.id) }}" class="form-stack">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <label class="field"><span>Como foi o atendimento?</span>
+                    <select name="rating" required>
+                      <option value="">Escolha uma nota…</option>
+                      {% for n in [5, 4, 3, 2, 1] %}<option value="{{ n }}">{{ '★' * n }} ({{ n }})</option>{% endfor %}
+                    </select></label>
+                  <label class="field"><span>Comentário <small class="muted">opcional</small></span><textarea name="comment" rows="3"></textarea></label>
+                  <button class="btn btn--gold btn--sm" type="submit">Enviar avaliação</button>
+                </form>
+              {% else %}
+                <p class="muted">O cliente ainda não avaliou este atendimento.</p>
+              {% endif %}
+            </div>
+          {% endif %}
+
+        {% endif %}
+      </div>
+
+      <aside class="layout__side">
+        <div class="card">
+          <h3>Advogado(a) responsável</h3>
+          {% if case.lawyers %}
+            <p><strong>{{ case.lawyers.profiles.full_name if case.lawyers.profiles }}</strong><br>
+              <span class="muted">OAB/{{ case.lawyers.oab_state }} {{ case.lawyers.oab_number }}</span></p>
+            <p>{{ stars(case.lawyers.avg_rating) }} <span class="small muted">{{ '%.1f'|format(case.lawyers.avg_rating|float) }}</span></p>
+          {% else %}
+            <p class="muted">Aguardando um advogado aceitar o caso.</p>
+          {% endif %}
+        </div>
+
+        {% if (is_client or is_lawyer or is_admin) and open_case %}
+          <div class="card">
+            <h3>Ações</h3>
+            <div class="stack">
+              {% if is_lawyer and case.status == 'em_andamento' %}
+                <form method="post" action="{{ url_for('cases.set_status', case_id=case.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn--gold btn--block" name="action" value="concluir" type="submit" data-confirm="Marcar este caso como concluído?">Marcar como concluído</button>
+                </form>
+              {% endif %}
+              {% if (is_client or is_admin) and not assigned %}
+                <form method="post" action="{{ url_for('cases.rematch', case_id=case.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn--outline btn--block" type="submit">Buscar mais advogados</button>
+                </form>
+              {% endif %}
+              {% if is_client %}
+                <form method="post" action="{{ url_for('cases.set_status', case_id=case.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn--ghost btn--block" name="action" value="cancelar" type="submit" data-confirm="Cancelar esta solicitação? Esta ação não pode ser desfeita.">Cancelar solicitação</button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+
+        {% if participant %}
+          <div class="card">
+            <h3>Linha do tempo</h3>
+            <ol class="timeline">
+              {% for e in events %}
+                <li><strong>{{ L.EVENT_TYPES.get(e.event_type, e.event_type) }}</strong>
+                  {% if e.description and e.event_type == 'status_alterado' %}<span class="small muted">{{ e.description }}</span>{% endif %}
+                  <time class="small muted">{{ e.created_at|datebr }}</time></li>
+              {% endfor %}
+            </ol>
+          </div>
+        {% endif %}
+      </aside>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}<script src="{{ url_for('static', filename='js/chat.js') }}" defer></script>{% endblock %}

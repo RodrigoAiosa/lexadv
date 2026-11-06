@@ -1,0 +1,53 @@
+{# Componentes reutilizáveis #}
+
+{% macro status_badge(status) -%}
+  <span class="badge badge--{{ status }}">{{ L.CASE_STATUS.get(status, status) }}</span>
+{%- endmacro %}
+
+{% macro urgency_badge(urgency) -%}
+  <span class="badge badge--urg-{{ urgency }}">{{ L.URGENCY.get(urgency, urgency) }}</span>
+{%- endmacro %}
+
+{% macro csrf() -%}
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{%- endmacro %}
+
+{% macro stars(value) -%}
+  {% set full = (value or 0)|round|int %}
+  <span class="stars" aria-label="Nota {{ value or 0 }} de 5">
+    {%- for i in range(1, 6) %}<span class="{{ 'on' if i <= full else '' }}">★</span>{% endfor -%}
+  </span>
+{%- endmacro %}
+
+{% macro case_card(case, show_lawyer=True) %}
+  <article class="card case-card">
+    <div class="case-card__top">
+      <span class="muted mono">{{ case.protocol }}</span>
+      {{ status_badge(case.status) }}
+    </div>
+    <h3><a href="{{ url_for('cases.detail', case_id=case.id) }}">{{ case.title }}</a></h3>
+    <p class="muted">
+      {{ case.legal_areas.name if case.legal_areas else '' }}
+      · {{ urgency_badge(case.urgency) }}
+      · {{ case.created_at|datebr('%d/%m/%Y') }}
+    </p>
+    {% if show_lawyer %}
+      <p class="small">
+        {% if case.lawyers %}
+          Advogado(a): <strong>{{ case.lawyers.profiles.full_name if case.lawyers.profiles else '—' }}</strong>
+          <span class="muted">OAB/{{ case.lawyers.oab_state }} {{ case.lawyers.oab_number }}</span>
+        {% else %}
+          <span class="muted">Ainda sem advogado responsável</span>
+        {% endif %}
+      </p>
+    {% endif %}
+  </article>
+{% endmacro %}
+
+{% macro empty(title, text) %}
+  <div class="empty">
+    <h3>{{ title }}</h3>
+    <p class="muted">{{ text }}</p>
+    {{ caller() if caller else '' }}
+  </div>
+{% endmacro %}

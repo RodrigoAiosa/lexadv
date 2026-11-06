@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% from "_macros.html" import case_card, urgency_badge, stars, empty with context %}
+{% block title %}Painel do advogado — LEX{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container">
+    <div class="page-head">
+      <div>
+        <h1>Painel do advogado</h1>
+        <p class="muted">OAB/{{ lawyer.oab_state }} {{ lawyer.oab_number }} ·
+          <span class="badge badge--v-{{ lawyer.verification_status }}">{{ L.VERIFICATION[lawyer.verification_status] }}</span></p>
+      </div>
+      <a class="btn btn--outline" href="{{ url_for('lawyer.profile') }}">Editar perfil</a>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><strong>{{ stars(lawyer.avg_rating) }} {{ '%.1f'|format(lawyer.avg_rating|float) }}</strong><span>{{ lawyer.reviews_count }} avaliação(ões)</span></div>
+      <div class="stat"><strong>{{ lawyer.cases_completed }}</strong><span>casos concluídos</span></div>
+      <div class="stat"><strong>{{ cases|selectattr('status', 'equalto', 'em_andamento')|list|length }}</strong><span>em andamento</span></div>
+      <div class="stat"><strong>{{ matches|length }}</strong><span>novas oportunidades</span></div>
+    </div>
+
+    {% if lawyer.verification_status != 'verificado' %}
+      <div class="notice notice--warning">
+        {% if lawyer.verification_status == 'pendente' %}
+          Sua inscrição na OAB está em análise. Assim que for verificada, você começará a receber solicitações da sua área.
+        {% else %}
+          Sua conta está com o status “{{ L.VERIFICATION[lawyer.verification_status] }}”. Entre em contato com o suporte para regularizar.
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <h2>Oportunidades para você</h2>
+    {% if matches %}
+      <div class="grid-cards">
+        {% for m in matches %}
+          {% set c = m.cases %}
+          <article class="card">
+            <div class="case-card__top">
+              <span class="muted">{{ c.legal_areas.name if c.legal_areas }}</span>
+              {{ urgency_badge(c.urgency) }}
+            </div>
+            <h3><a href="{{ url_for('cases.detail', case_id=c.id) }}">{{ c.title }}</a></h3>
+            <p class="clamp">{{ c.description }}</p>
+            <p class="small muted">{{ c.city or '' }}{{ ' / ' + c.state if c.state }} · expira em {{ m.expires_at|datebr }}</p>
+            <form method="post" action="{{ url_for('lawyer.respond', match_id=m.id) }}" class="actions">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="case_id" value="{{ c.id }}">
+              <button class="btn btn--gold btn--sm" name="action" value="aceitar" type="submit" data-confirm="Aceitar esta solicitação? Você ficará responsável pelo caso.">Aceitar</button>
+              <button class="btn btn--ghost btn--sm" name="action" value="recusar" type="submit">Recusar</button>
+              <a class="btn btn--ghost btn--sm" href="{{ url_for('cases.detail', case_id=c.id) }}">Ver detalhes</a>
+            </form>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      {{ empty("Nenhuma oportunidade no momento", "Quando um cliente abrir uma solicitação compatível com suas áreas, ela aparecerá aqui.") }}
+    {% endif %}
+
+    <h2>Meus casos</h2>
+    {% if cases %}
+      <div class="grid-cards">{% for case in cases %}{{ case_card(case, show_lawyer=False) }}{% endfor %}</div>
+    {% else %}
+      {{ empty("Você ainda não assumiu nenhum caso", "Aceite uma oportunidade para começar.") }}
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
