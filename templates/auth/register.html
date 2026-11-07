@@ -26,6 +26,33 @@
           <input type="email" name="email" autocomplete="email" value="{{ form.get('email', '') }}" required></label>
         <label class="field"><span>Telefone / WhatsApp <small class="muted">(opcional)</small></span>
           <input type="tel" name="phone" autocomplete="tel" value="{{ form.get('phone', '') }}"></label>
+        <div class="grid-place">
+          <label class="field"><span>Estado</span>
+            <select name="state" id="state" autocomplete="address-level1" required>
+              <option value="">UF</option>
+              {% for uf in STATES %}<option value="{{ uf }}" {{ 'selected' if form.get('state') == uf }}>{{ uf }}</option>{% endfor %}
+            </select></label>
+          <label class="field"><span>Cidade</span>
+            <input type="text" name="city" id="city" list="cidades" autocomplete="address-level2" maxlength="120"
+                   value="{{ form.get('city', '') }}" placeholder="Digite e escolha a cidade" required>
+            <datalist id="cidades"></datalist></label>
+        </div>
+
+        <div class="oab-box" id="oab-box" {{ 'hidden' if preset != 'advogado' }}>
+          <p class="oab-box__title">Inscrição na OAB <small class="muted">(obrigatória para advogados)</small></p>
+          <div class="grid-oab">
+            <label class="field"><span>Número da OAB</span>
+              <input type="text" name="oab_number" id="oab_number" inputmode="numeric" maxlength="10" placeholder="123456"
+                     value="{{ form.get('oab_number', '') }}" {{ 'required' if preset == 'advogado' }}></label>
+            <label class="field"><span>UF da OAB</span>
+              <select name="oab_state" id="oab_state" {{ 'required' if preset == 'advogado' }}>
+                <option value="">UF</option>
+                {% for uf in STATES %}<option value="{{ uf }}" {{ 'selected' if form.get('oab_state') == uf }}>{{ uf }}</option>{% endfor %}
+              </select></label>
+          </div>
+          <p class="small muted">Sua inscrição é conferida pela equipe do LEX antes de você começar a receber casos.</p>
+        </div>
+
         <div class="grid-2">
           <label class="field"><span>Senha</span>
             <input type="password" name="password" autocomplete="new-password" minlength="8" required>
@@ -44,3 +71,4 @@
   </div>
 </section>
 {% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/register.js') }}" defer></script>{% endblock %}

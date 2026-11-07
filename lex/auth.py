@@ -19,6 +19,8 @@ from flask import (
 from supabase import AuthApiError
 
 from . import db, services
+from .constants import STATES
+from .utils import OAB_RE, normalize_oab
 
 bp = Blueprint("auth", __name__)
 
@@ -148,6 +150,10 @@ def register():
         email = form.get("email", "").strip().lower()
         phone = form.get("phone", "").strip()
         password = form.get("password", "")
+        state = form.get("state", "").strip().upper()
+        city = " ".join(form.get("city", "").split())
+        oab_number = normalize_oab(form.get("oab_number", ""))
+        oab_state = form.get("oab_state", "").strip().upper()
         errors = []
         if role not in REGISTER_ROLES:
             errors.append("Escolha se você é cliente ou advogado.")
@@ -155,6 +161,15 @@ def register():
             errors.append("Informe seu nome completo.")
         if not EMAIL_RE.match(email):
             errors.append("Informe um e-mail válido.")
+        if state not in STATES:
+            errors.append("Selecione o seu estado.")
+        if not 2 <= len(city) <= 120:
+            errors.append("Informe a sua cidade.")
+        if role == "advogado":
+            if not OAB_RE.match(oab_number):
+                errors.append("Informe o número da sua OAB (somente números, ex.: 123456).")
+            if oab_state not in STATES:
+                errors.append("Selecione o estado da sua inscrição na OAB.")
         if len(password) < 8:
             errors.append("A senha deve ter pelo menos 8 caracteres.")
         if password != form.get("password_confirm", ""):
@@ -166,14 +181,21 @@ def register():
                 flash(message, "error")
             return render_template("auth/register.html", preset=role or preset, form=form), 400
 
-        options = {"data": {"role": role, "full_name": name, "phone": phone}}
+        meta = {"role": role, "full_name": name, "phone": phone, "state": state, "city": city}
+        if role == "advogado":
+            meta.update({"oab_number": oab_number, "oab_state": oab_state})
+        options = {"data": meta}
         site = current_app.config.get("SITE_URL")
         if site:
             options["email_redirect_to"] = f"{site}/login"
         try:
             res = db.anon_client().auth.sign_up({"email": email, "password": password, "options": options})
         except AuthApiError as exc:
-            flash(f"Não foi possível concluir o cadastro: {exc.message}", "error")
+            if "database error" in exc.message.lower():
+                message = "Verifique os dados informados (a OAB pode já estar cadastrada) e tente de novo."
+            else:
+                message = exc.message
+            flash(f"Não foi possível concluir o cadastro: {message}", "error")
             return render_template("auth/register.html", preset=role, form=form), 400
 
         if res.session:  # confirmação de e-mail desligada no Supabase: já entra logado

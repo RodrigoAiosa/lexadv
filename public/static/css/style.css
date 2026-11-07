@@ -149,7 +149,7 @@ p { margin: 0 0 1em; }
 .stat strong { display: block; font: 700 1.5rem var(--serif); color: var(--navy); } .stat span { color: var(--muted); font-size: .85rem; }
 
 /* ---------- formulários ---------- */
-.field { display: grid; gap: .3rem; margin-bottom: 1rem; border: 0; padding: 0; min-width: 0; }
+.field { display: grid; align-content: start; gap: .3rem; margin-bottom: 1rem; border: 0; padding: 0; min-width: 0; }
 .field > span, .field > legend { font-weight: 600; font-size: .92rem; }
 input[type=text], input[type=email], input[type=password], input[type=tel], input[type=number], input[type=url],
 input[type=datetime-local], select, textarea, input[type=file] {
@@ -171,6 +171,12 @@ input:focus, select:focus, textarea:focus { outline: 3px solid #d6a85a55; border
 .area-picker li { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
 .area-picker .check { margin-bottom: .3rem; }
 .radio-mini { font-size: .8rem; color: var(--muted); display: inline-flex; gap: .3rem; align-items: center; }
+.grid-place { display: grid; grid-template-columns: 120px 1fr; gap: 1rem; }
+.grid-oab { display: grid; grid-template-columns: 1fr 120px; gap: 1rem; }
+.oab-box { background: #fffaf0; border: 1px solid var(--gold-2); border-radius: 12px; padding: 1rem 1.2rem .4rem; margin-bottom: 1rem; }
+.oab-box[hidden] { display: none; }
+.oab-box__title { font-weight: 700; color: var(--navy); margin: 0 0 .6rem; }
+select { appearance: auto; }
 .form-stack { display: grid; gap: .2rem; margin-top: 1rem; }
 .inline-fields { display: grid; grid-template-columns: 1fr 1fr auto; gap: .6rem; align-items: center; margin-top: 1rem; }
 
@@ -227,6 +233,7 @@ input:focus, select:focus, textarea:focus { outline: 3px solid #d6a85a55; border
   .nav { display: none; position: absolute; left: 0; right: 0; top: 64px; background: var(--navy); flex-direction: column; align-items: flex-start; padding: 1rem; gap: .9rem; border-top: 1px solid #ffffff22; }
   .nav.is-open { display: flex; }
   .grid-2, .inline-fields, .role-switch { grid-template-columns: 1fr; }
+  .grid-place, .grid-oab { grid-template-columns: 100px 1fr; }
   .meta div { grid-template-columns: 1fr; gap: 0; }
   .hero { padding: 3rem 0; }
 }

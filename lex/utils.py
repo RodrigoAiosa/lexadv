@@ -1,4 +1,5 @@
 """Utilitários: formatação, validação e tratamento de erros do Supabase."""
+import re
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from zoneinfo import ZoneInfo
@@ -72,3 +73,11 @@ def db_error_message(exc: Exception) -> str:
             return "Este registro já existe."
         return message or "Não foi possível concluir a operação."
     return "Não foi possível concluir a operação. Tente novamente."
+
+
+OAB_RE = re.compile(r"^[0-9]{1,7}[A-Z]?$")
+
+
+def normalize_oab(value: str) -> str:
+    """Normaliza o número da OAB: maiúsculas, sem pontos, espaços ou traços."""
+    return re.sub(r"[\s.\-]", "", (value or "")).upper()

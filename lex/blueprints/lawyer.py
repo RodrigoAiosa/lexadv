@@ -1,17 +1,13 @@
 """Área do advogado: painel, perfil profissional e resposta às oportunidades."""
-import re
-
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from postgrest.exceptions import APIError
 
 from .. import services
 from ..auth import current_user, get_db, role_required
 from ..constants import STATES
-from ..utils import db_error_message, parse_decimal, parse_int
+from ..utils import OAB_RE, db_error_message, normalize_oab, parse_decimal, parse_int
 
 bp = Blueprint("lawyer", __name__, url_prefix="/advogado")
-
-OAB_RE = re.compile(r"^[0-9]{1,7}[A-Z]?$")
 
 
 @bp.route("/")
@@ -20,8 +16,8 @@ def dashboard():
     client = get_db()
     uid = current_user()["id"]
     lawyer = services.get_lawyer(client, uid)
-    if lawyer is None:
-        flash("Complete seu perfil profissional (OAB e especialidades) para receber solicitações.", "info")
+    if lawyer is None or not lawyer.get("lawyer_specialties"):
+        flash("Complete seu perfil profissional (áreas de atuação) para receber solicitações.", "info")
         return redirect(url_for("lawyer.profile"))
     matches = services.list_pending_matches(client, uid) if lawyer["verification_status"] == "verificado" else []
     cases = services.list_lawyer_cases(client, uid)
@@ -64,7 +60,7 @@ def profile():
             "accepts_online": bool(form.get("accepts_online")),
         }
         if lawyer is None:
-            oab_number = form.get("oab_number", "").strip().upper()
+            oab_number = normalize_oab(form.get("oab_number", ""))
             oab_state = form.get("oab_state", "").strip().upper()
             if not OAB_RE.match(oab_number):
                 errors.append("Número da OAB inválido (ex.: 123456).")

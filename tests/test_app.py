@@ -69,14 +69,49 @@ def test_register_cannot_choose_admin(client):
     assert res.status_code == 400
 
 
-def test_register_ok_sends_metadata(client, fake):
-    res = client.post("/cadastro", data={
-        "role": "advogado", "full_name": "Fulano de Tal", "email": "f@t.com", "phone": "11999999999",
-        "password": "senha1234", "password_confirm": "senha1234", "terms": "1",
-    })
+BASE_REGISTER = {
+    "full_name": "Fulano de Tal", "email": "f@t.com", "phone": "11999999999", "state": "SP", "city": "São Paulo",
+    "password": "senha1234", "password_confirm": "senha1234", "terms": "1",
+}
+
+
+def test_register_lawyer_sends_metadata_with_oab(client, fake):
+    data = {**BASE_REGISTER, "role": "advogado", "oab_number": "123.456", "oab_state": "sp"}
+    res = client.post("/cadastro", data=data)
     assert res.status_code == 302 and "/login" in res.headers["Location"]
-    sent = fake.signups[0]
-    assert sent["options"]["data"] == {"role": "advogado", "full_name": "Fulano de Tal", "phone": "11999999999"}
+    assert fake.signups[0]["options"]["data"] == {
+        "role": "advogado", "full_name": "Fulano de Tal", "phone": "11999999999", "state": "SP",
+        "city": "São Paulo", "oab_number": "123456", "oab_state": "SP",
+    }
+
+
+def test_register_lawyer_requires_oab(client, fake):
+    res = client.post("/cadastro", data={**BASE_REGISTER, "role": "advogado"})
+    assert res.status_code == 400 and not fake.signups
+    res = client.post("/cadastro", data={**BASE_REGISTER, "role": "advogado", "oab_number": "ABC", "oab_state": "SP"})
+    assert res.status_code == 400 and not fake.signups
+    res = client.post("/cadastro", data={**BASE_REGISTER, "role": "advogado", "oab_number": "123456"})
+    assert res.status_code == 400 and not fake.signups
+
+
+def test_register_client_needs_state_and_city_but_not_oab(client, fake):
+    res = client.post("/cadastro", data={**BASE_REGISTER, "role": "cliente", "city": ""})
+    assert res.status_code == 400
+    res = client.post("/cadastro", data={**BASE_REGISTER, "role": "cliente", "state": "XX"})
+    assert res.status_code == 400 and not fake.signups
+    res = client.post("/cadastro", data={**BASE_REGISTER, "role": "cliente", "oab_number": "999"})
+    assert res.status_code == 302
+    assert fake.signups[0]["options"]["data"] == {
+        "role": "cliente", "full_name": "Fulano de Tal", "phone": "11999999999", "state": "SP", "city": "São Paulo",
+    }
+
+
+def test_register_page_has_place_and_oab_fields(client):
+    html = client.get("/cadastro?perfil=advogado").get_data(as_text=True)
+    for name in ('name="state"', 'name="city"', 'name="oab_number"', 'name="oab_state"'):
+        assert name in html
+    assert 'id="oab-box" hidden' not in html
+    assert 'id="oab-box" hidden' in client.get("/cadastro").get_data(as_text=True)
 
 
 def test_logout_clears_session(client, login):
