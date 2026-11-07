@@ -13,7 +13,8 @@ direciona automaticamente para advogados verificados, de acordo com a especialid
 
 ```
 lexadv/
-├── app.py                  # ponto de entrada (python app.py | gunicorn app:app)
+├── app.py                  # objeto Flask `app` (gunicorn app:app, Vercel)
+├── run.py                  # servidor de desenvolvimento (python run.py)
 ├── requirements.txt        # dependências de produção
 ├── requirements-dev.txt    # + pytest e ruff
 ├── .env.example            # variáveis de ambiente (copie para .env)
@@ -42,7 +43,7 @@ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
 
 cp .env.example .env               # confira SUPABASE_URL / SUPABASE_KEY e defina SECRET_KEY
-python app.py                      # http://127.0.0.1:5000
+python run.py                      # http://127.0.0.1:5000
 ```
 
 Testes e lint:
