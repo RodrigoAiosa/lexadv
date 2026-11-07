@@ -10,7 +10,7 @@ from flask import Flask
 
 from lex import configure_app
 
-app = Flask(__name__, template_folder="templates", static_folder="public/static")
+app = Flask(__name__)
 configure_app(app)
 
 if __name__ == "__main__":

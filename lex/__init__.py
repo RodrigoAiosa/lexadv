@@ -1,4 +1,6 @@
 """LEX — plataforma que conecta clientes a advogados especialistas."""
+from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv()  # precisa rodar antes de importar a config, que lê as variáveis ao carregar
@@ -23,6 +25,11 @@ def configure_app(app, config_object=None):
 
     Em `app.py` o objeto Flask é criado explicitamente (a Vercel só reconhece o app assim) e passa por aqui.
     """
+    # Pastas na raiz do projeto (app.py usa Flask(__name__) puro para a Vercel detectar o app).
+    root = Path(__file__).resolve().parent.parent
+    app.template_folder = str(root / "templates")
+    app.static_folder = str(root / "public" / "static")
+
     app.config.from_object(config_object or Config)
 
     if app.config["APP_ENV"] == "production" and not app.testing:

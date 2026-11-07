@@ -10,9 +10,6 @@ dependencies = [
     "python-dotenv>=1.0,<2.0",
 ]
 
-[tool.vercel]
-entrypoint = "app:app"
-
 [tool.ruff]
 line-length = 120
 target-version = "py310"
