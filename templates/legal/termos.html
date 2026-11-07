@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Termos de uso — LEX{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container narrow legal">
+    <p class="eyebrow">Documento legal</p>
+    <h1>Termos de uso</h1>
+    <p class="muted small">Última atualização: 7 de novembro de 2026.</p>
+
+    <h2>1. O que é o LEX</h2>
+    <p>O LEX é uma plataforma de intermediação que conecta pessoas que precisam de orientação jurídica (<strong>clientes</strong>) a advogados inscritos na OAB (<strong>advogados</strong>), de acordo com a área de atuação de cada um. O LEX <strong>não presta assessoria jurídica</strong>, não é escritório de advocacia e não faz parte da relação profissional que venha a se formar entre cliente e advogado.</p>
+
+    <h2>2. Cadastro</h2>
+    <ul>
+      <li>Você deve ter 18 anos ou mais e informar dados verdadeiros, completos e atualizados.</li>
+      <li>A conta é pessoal e intransferível. Guarde sua senha e avise-nos se suspeitar de uso indevido.</li>
+      <li>Advogados devem informar o número e a UF de sua inscrição na OAB. A inscrição é conferida pela equipe do LEX antes de a conta receber casos, e o LEX pode recusar ou suspender contas cuja inscrição não seja confirmada.</li>
+      <li>Informar a inscrição de outra pessoa ou se passar por advogado é vedado e pode gerar responsabilidade civil, criminal e ética.</li>
+    </ul>
+
+    <h2>3. Como funciona</h2>
+    <ul>
+      <li>O cliente descreve seu caso e pode anexar documentos. O LEX direciona o pedido a advogados da área correspondente.</li>
+      <li>O advogado decide livremente se aceita o caso. Contratação, honorários e condução do caso são combinados diretamente entre as partes, dentro do Código de Ética e Disciplina da OAB.</li>
+      <li>O LEX não garante que o caso será aceito, nem o resultado de qualquer demanda.</li>
+    </ul>
+
+    <h2>4. Regras de uso</h2>
+    <p>É proibido usar a plataforma para fins ilícitos, enviar conteúdo falso, ofensivo ou que viole direitos de terceiros, tentar acessar dados de outros usuários ou interferir no funcionamento do serviço. Advogados devem respeitar as normas da OAB sobre publicidade e captação de clientes.</p>
+
+    <h2>5. Dados pessoais</h2>
+    <p>O tratamento dos seus dados é descrito na <a href="{{ url_for('main.privacy') }}">Política de privacidade</a>.</p>
+
+    <h2>6. Responsabilidades</h2>
+    <p>O LEX responde pelo funcionamento da plataforma, mas não pelo conteúdo informado pelos usuários, pelos serviços prestados pelos advogados nem por acordos feitos entre as partes. O serviço pode ficar indisponível por manutenção ou por fatores fora do nosso controle.</p>
+
+    <h2>7. Suspensão e encerramento</h2>
+    <p>Podemos suspender ou encerrar contas que violem estes termos. Você pode pedir o encerramento da sua conta e a exclusão dos seus dados a qualquer momento, conforme a Política de privacidade.</p>
+
+    <h2>8. Alterações e foro</h2>
+    <p>Estes termos podem ser atualizados; mudanças relevantes serão comunicadas na plataforma. Aplica-se a lei brasileira, e fica eleito o foro do domicílio do usuário para dúvidas decorrentes destes termos.</p>
+
+    <p class="muted small">Modelo de texto para a fase inicial do produto. Recomenda-se revisão por advogado antes do lançamento comercial, especialmente quando houver cobrança.</p>
+    <p><a class="btn btn--navy" href="{{ url_for('auth.register') }}">Voltar ao cadastro</a></p>
+  </div>
+</section>
+{% endblock %}

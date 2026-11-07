@@ -27,6 +27,16 @@ def cities(uf):
     return response
 
 
+@bp.route("/termos")
+def terms():
+    return render_template("legal/termos.html")
+
+
+@bp.route("/privacidade")
+def privacy():
+    return render_template("legal/privacidade.html")
+
+
 @bp.route("/painel")
 @login_required
 def painel():

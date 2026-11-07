@@ -489,3 +489,16 @@ def test_utils_formatting():
     assert utils.parse_decimal("1.234,56") == utils.parse_decimal("1234.56")
     assert utils.parse_decimal("abc") is None and utils.parse_decimal("-5") is None
     assert utils.filesize(2048) == "2.0 KB"
+
+
+@pytest.mark.parametrize(("path", "title"), [("/termos", "Termos de uso"), ("/privacidade", "Política de privacidade")])
+def test_legal_pages_are_public(client, path, title):
+    response = client.get(path)
+    assert response.status_code == 200
+    assert title in response.get_data(as_text=True)
+
+
+def test_register_terms_checkbox_links_to_legal_pages(client):
+    html = client.get("/cadastro").get_data(as_text=True)
+    assert 'href="/termos"' in html
+    assert 'href="/privacidade"' in html

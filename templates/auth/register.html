@@ -68,7 +68,9 @@
         </div>
         <label class="check">
           <input type="checkbox" name="terms" value="1" required>
-          <span>Li e aceito os termos de uso e a política de privacidade (LGPD).</span>
+          <span>Li e aceito os
+            <a href="{{ url_for('main.terms') }}" target="_blank" rel="noopener">termos de uso</a> e a
+            <a href="{{ url_for('main.privacy') }}" target="_blank" rel="noopener">política de privacidade</a> (LGPD).</span>
         </label>
         <button class="btn btn--gold btn--block" type="submit">Criar conta</button>
       </form>

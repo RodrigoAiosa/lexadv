@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Política de privacidade — LEX{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container narrow legal">
+    <p class="eyebrow">Documento legal</p>
+    <h1>Política de privacidade</h1>
+    <p class="muted small">Última atualização: 7 de novembro de 2026. Em conformidade com a Lei Geral de Proteção de Dados (Lei 13.709/2018, LGPD).</p>
+
+    <h2>1. Quais dados coletamos</h2>
+    <ul>
+      <li><strong>Cadastro:</strong> nome, e-mail, telefone (opcional), estado e cidade, senha (guardada de forma protegida pelo provedor de autenticação) e, para advogados, número e UF da OAB.</li>
+      <li><strong>Uso da plataforma:</strong> descrição dos casos, documentos anexados, mensagens e notificações.</li>
+      <li><strong>Dados técnicos:</strong> cookie de sessão necessário ao login e à segurança dos formulários.</li>
+    </ul>
+    <p>Pedidos jurídicos podem conter informações sensíveis. Envie apenas o necessário para o direcionamento do caso.</p>
+
+    <h2>2. Para que usamos</h2>
+    <ul>
+      <li>Criar e manter sua conta e autenticar seu acesso.</li>
+      <li>Direcionar casos a advogados da área e do estado adequados.</li>
+      <li>Conferir a inscrição dos advogados na OAB.</li>
+      <li>Enviar notificações sobre seus casos.</li>
+      <li>Manter a segurança do serviço e cumprir obrigações legais.</li>
+    </ul>
+    <p>As bases legais são a execução do serviço que você solicitou, o cumprimento de obrigação legal, o legítimo interesse (segurança e prevenção a fraudes) e o seu consentimento, quando aplicável.</p>
+
+    <h2>3. Com quem compartilhamos</h2>
+    <ul>
+      <li><strong>Advogados:</strong> recebem os dados do caso e o contato do cliente necessários para avaliar o atendimento.</li>
+      <li><strong>Clientes:</strong> veem o nome e a área de atuação do advogado que aceitou o caso.</li>
+      <li><strong>Provedores de infraestrutura:</strong> banco de dados e autenticação (Supabase) e hospedagem (Vercel), que tratam dados apenas para operar o serviço.</li>
+    </ul>
+    <p>Não vendemos seus dados.</p>
+
+    <h2>4. Por quanto tempo guardamos</h2>
+    <p>Enquanto sua conta existir e pelo prazo necessário para cumprir obrigações legais ou defender direitos. Depois disso, os dados são excluídos ou anonimizados.</p>
+
+    <h2>5. Seus direitos</h2>
+    <p>Você pode pedir confirmação do tratamento, acesso, correção, anonimização, portabilidade, informação sobre compartilhamento, exclusão dos dados e revogação do consentimento, nos termos do art. 18 da LGPD. Também pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD).</p>
+
+    <h2>6. Segurança</h2>
+    <p>Usamos conexão criptografada (HTTPS), controle de acesso por usuário no banco de dados e proteção contra falsificação de formulários. Nenhum sistema é totalmente imune a falhas, e trabalhamos para corrigir qualquer incidente com transparência.</p>
+
+    <h2>7. Contato</h2>
+    <p>Para exercer seus direitos ou tirar dúvidas, escreva para <a href="mailto:rodrigoaiosa@gmail.com">rodrigoaiosa@gmail.com</a>.</p>
+
+    <p class="muted small">Modelo de texto para a fase inicial do produto. Recomenda-se revisão por advogado antes do lançamento comercial.</p>
+    <p><a class="btn btn--navy" href="{{ url_for('auth.register') }}">Voltar ao cadastro</a></p>
+  </div>
+</section>
+{% endblock %}

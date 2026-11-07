@@ -241,3 +241,10 @@ select { appearance: auto; }
   .hero { padding: 3rem 0; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+
+/* Páginas legais */
+.legal h2 { margin-top: 1.6em; }
+.legal ul { padding-left: 1.2rem; margin: 0 0 1em; }
+.legal li { margin-bottom: .4rem; }
+.check a { font-weight: 600; }
+.footer-note a { color: inherit; }
