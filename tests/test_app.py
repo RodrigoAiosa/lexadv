@@ -397,8 +397,15 @@ def test_admin_dashboard_and_verification(client, login, fake):
                                     created_at="2026-11-01T10:00:00+00:00", city="São Paulo"))
     html = client.get("/admin/").get_data(as_text=True)
     assert "Dr. João Lima" in html and "Verificar" in html
+    assert "cna.oab.org.br" in html and "confirmadv.oab.org.br" in html and 'name="checked_oab"' in html
+    # sem a confirmação da conferência, a verificação é recusada
     client.post(f"/admin/advogados/{LAWYER_ID}/verificacao", data={"action": "verificar"})
+    assert fake.rpc_calls == []
+    client.post(f"/admin/advogados/{LAWYER_ID}/verificacao", data={"action": "verificar", "checked_oab": "1"})
     assert fake.rpc_calls == [("admin_set_lawyer_verification", {"p_lawyer_id": LAWYER_ID, "p_status": "verificado"})]
+    # rejeitar não exige a confirmação
+    client.post(f"/admin/advogados/{LAWYER_ID}/verificacao", data={"action": "rejeitar"})
+    assert fake.rpc_calls[-1][1]["p_status"] == "rejeitado"
     assert ADMIN_ID  # usado só para documentar o papel
 
 

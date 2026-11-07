@@ -27,6 +27,9 @@ def set_verification(lawyer_id):
     if not status:
         flash("Ação inválida.", "error")
         return redirect(url_for("admin.dashboard"))
+    if status == "verificado" and request.form.get("checked_oab") != "1":
+        flash("Confirme que conferiu nome e situação regular na consulta da OAB antes de verificar.", "error")
+        return redirect(url_for("admin.dashboard"))
     try:
         services.set_lawyer_verification(get_db(), lawyer_id, status)
     except APIError as exc:

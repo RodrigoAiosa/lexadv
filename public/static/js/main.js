@@ -71,3 +71,21 @@
     document.addEventListener("visibilitychange", refreshBadge);
   }
 })();
+
+// Botões "Copiar" (ex.: número da OAB no painel do admin)
+(function () {
+  "use strict";
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-copy]");
+    if (!btn) return;
+    var text = btn.getAttribute("data-copy");
+    var done = function () {
+      var old = btn.textContent;
+      btn.textContent = "Copiado";
+      window.setTimeout(function () { btn.textContent = old; }, 1500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () {});
+    }
+  });
+})();

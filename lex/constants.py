@@ -58,3 +58,7 @@ EVENT_TYPES = {
 ALLOWED_UPLOAD_EXTENSIONS = {"pdf", "jpg", "jpeg", "png", "txt", "doc", "docx"}
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 STORAGE_BUCKET = "case-documents"
+
+# Consultas públicas da OAB usadas na conferência manual da inscrição
+OAB_CNA_URL = "https://cna.oab.org.br/"
+OAB_CONFIRMADV_URL = "https://confirmadv.oab.org.br/"

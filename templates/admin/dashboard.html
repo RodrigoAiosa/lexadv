@@ -5,14 +5,26 @@
 {% macro lawyer_row(lw, actions) %}
   <tr>
     <td><strong>{{ lw.profiles.full_name if lw.profiles else '—' }}</strong><br><span class="small muted">{{ lw.city or '' }}{{ ' / ' + lw.state if lw.state }}</span></td>
-    <td>OAB/{{ lw.oab_state }} {{ lw.oab_number }}</td>
+    <td>
+      <strong>OAB/{{ lw.oab_state }} {{ lw.oab_number }}</strong>
+      <button type="button" class="btn btn--ghost btn--sm" data-copy="{{ lw.oab_number }}" title="Copiar o número da OAB">Copiar</button>
+      <div class="small oab-links">
+        <a href="{{ L.OAB_CNA_URL }}" target="_blank" rel="noopener noreferrer">Consultar no CNA</a> ·
+        <a href="{{ L.OAB_CONFIRMADV_URL }}" target="_blank" rel="noopener noreferrer">ConfirmADV</a>
+      </div>
+    </td>
     <td><span class="badge badge--v-{{ lw.verification_status }}">{{ L.VERIFICATION[lw.verification_status] }}</span></td>
     <td>{{ lw.created_at|datebr('%d/%m/%Y') }}</td>
     <td>
       <form method="post" action="{{ url_for('admin.set_verification', lawyer_id=lw.profile_id) }}" class="actions">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% if actions|selectattr(0, 'equalto', 'verificar')|list %}
+          <label class="check small"><input type="checkbox" name="checked_oab" value="1" required>
+            <span>Conferi nome e situação regular na consulta da OAB</span></label>
+        {% endif %}
         {% for value, label, cls in actions %}
-          <button class="btn btn--sm {{ cls }}" name="action" value="{{ value }}" type="submit">{{ label }}</button>
+          <button class="btn btn--sm {{ cls }}" name="action" value="{{ value }}" type="submit"
+                  {{ 'formnovalidate' if value != 'verificar' }}>{{ label }}</button>
         {% endfor %}
       </form>
     </td>
@@ -23,7 +35,15 @@
 <section class="section">
   <div class="container">
     <h1>Verificação de advogados</h1>
-    <p class="muted">Confira a inscrição na OAB (consulta nacional da OAB) antes de aprovar.</p>
+    <div class="notice notice--warning">
+      <strong>Como conferir a OAB:</strong>
+      <ol class="small">
+        <li>Copie o número e abra a consulta pública (CNA ou ConfirmADV) pelos links da linha do advogado.</li>
+        <li>Pesquise pelo número e pela UF da inscrição.</li>
+        <li>Confira se o <strong>nome</strong> é o mesmo do cadastro e se a situação é <strong>regular</strong>.</li>
+        <li>Marque a confirmação e clique em Verificar. Se o nome não bater ou a situação não for regular, rejeite.</li>
+      </ol>
+    </div>
 
     <h2>Aguardando análise ({{ pending|length }})</h2>
     {% if pending %}
