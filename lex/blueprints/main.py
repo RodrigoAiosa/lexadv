@@ -1,7 +1,7 @@
 """Páginas públicas, painel e notificações."""
 from flask import Blueprint, jsonify, redirect, render_template, request, url_for
 
-from .. import db, services
+from .. import db, places, services
 from ..auth import current_user, get_db, home_for, login_required
 
 bp = Blueprint("main", __name__)
@@ -14,6 +14,17 @@ def index():
     except Exception:  # noqa: BLE001 - a home deve abrir mesmo com o banco indisponível
         areas = []
     return render_template("index.html", areas=areas)
+
+
+@bp.route("/cidades/<uf>")
+def cities(uf):
+    """Cidades do estado (público: usado no cadastro, antes do login)."""
+    items = places.cities_for(uf)
+    if not items:
+        return jsonify({"error": "UF inválida"}), 404
+    response = jsonify(items)
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    return response
 
 
 @bp.route("/painel")

@@ -23,9 +23,14 @@
         <label class="field"><span>Nome completo</span>
           <input type="text" name="full_name" autocomplete="name" value="{{ form.get('full_name', '') }}" required></label>
         <label class="field"><span>E-mail</span>
-          <input type="email" name="email" autocomplete="email" value="{{ form.get('email', '') }}" required></label>
+          <input type="email" name="email" id="email" autocomplete="email" inputmode="email" maxlength="254"
+                 pattern="[A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,}"
+                 placeholder="nome@dominio.com.br" value="{{ form.get('email', '') }}" required>
+          <small class="muted">Sem espaços nem acentos.</small></label>
         <label class="field"><span>Telefone / WhatsApp <small class="muted">(opcional)</small></span>
-          <input type="tel" name="phone" autocomplete="tel" value="{{ form.get('phone', '') }}"></label>
+          <input type="tel" name="phone" id="phone" autocomplete="tel" inputmode="tel" maxlength="20"
+                 pattern="\(\d{2}\) (9\d{4}|[2-5]\d{3})-\d{4}" placeholder="(11) 91234-5678"
+                 value="{{ form.get('phone', '') }}"></label>
         <div class="grid-place">
           <label class="field"><span>Estado</span>
             <select name="state" id="state" autocomplete="address-level1" required>
@@ -33,9 +38,10 @@
               {% for uf in STATES %}<option value="{{ uf }}" {{ 'selected' if form.get('state') == uf }}>{{ uf }}</option>{% endfor %}
             </select></label>
           <label class="field"><span>Cidade</span>
-            <input type="text" name="city" id="city" list="cidades" autocomplete="address-level2" maxlength="120"
-                   value="{{ form.get('city', '') }}" placeholder="Digite e escolha a cidade" required>
-            <datalist id="cidades"></datalist></label>
+            <select name="city" id="city" autocomplete="address-level2" required {{ 'disabled' if not cities }}>
+              <option value="">{{ 'Selecione a cidade' if cities else 'Escolha o estado primeiro' }}</option>
+              {% for c in cities|default([]) %}<option value="{{ c }}" {{ 'selected' if form.get('city') == c }}>{{ c }}</option>{% endfor %}
+            </select></label>
         </div>
 
         <div class="oab-box" id="oab-box" {{ 'hidden' if preset != 'advogado' }}>

@@ -80,7 +80,7 @@ def test_register_lawyer_sends_metadata_with_oab(client, fake):
     res = client.post("/cadastro", data=data)
     assert res.status_code == 302 and "/login" in res.headers["Location"]
     assert fake.signups[0]["options"]["data"] == {
-        "role": "advogado", "full_name": "Fulano de Tal", "phone": "11999999999", "state": "SP",
+        "role": "advogado", "full_name": "Fulano de Tal", "phone": "(11) 99999-9999", "state": "SP",
         "city": "São Paulo", "oab_number": "123456", "oab_state": "SP",
     }
 
@@ -102,8 +102,63 @@ def test_register_client_needs_state_and_city_but_not_oab(client, fake):
     res = client.post("/cadastro", data={**BASE_REGISTER, "role": "cliente", "oab_number": "999"})
     assert res.status_code == 302
     assert fake.signups[0]["options"]["data"] == {
-        "role": "cliente", "full_name": "Fulano de Tal", "phone": "11999999999", "state": "SP", "city": "São Paulo",
+        "role": "cliente", "full_name": "Fulano de Tal", "phone": "(11) 99999-9999", "state": "SP",
+        "city": "São Paulo",
     }
+
+
+@pytest.mark.parametrize("email", [
+    "sem-arroba.com", "a@b", "a b@c.com", "a@@c.com", "a@c..com", "açaí@dominio.com", "a@dominio.c", "@dominio.com",
+])
+def test_register_rejects_bad_email(client, fake, email):
+    res = client.post("/cadastro", data={**BASE_REGISTER, "role": "cliente", "email": email})
+    assert res.status_code == 400 and not fake.signups
+
+
+@pytest.mark.parametrize("phone", [
+    "123", "(00) 91234-5678", "(11) 81234-5678", "(11) 61234-5678", "abcdefghijk", "(11) 91234-56789",
+])
+def test_register_rejects_bad_phone(client, fake, phone):
+    res = client.post("/cadastro", data={**BASE_REGISTER, "role": "cliente", "phone": phone})
+    assert res.status_code == 400 and not fake.signups
+
+
+@pytest.mark.parametrize("raw, expected", [
+    ("(21) 98765-4321", "(21) 98765-4321"), ("21987654321", "(21) 98765-4321"),
+    ("+55 21 98765-4321", "(21) 98765-4321"), ("(21) 2345-6789", "(21) 2345-6789"), ("", ""),
+])
+def test_register_accepts_and_formats_phone(client, fake, raw, expected):
+    res = client.post("/cadastro", data={**BASE_REGISTER, "role": "cliente", "phone": raw})
+    assert res.status_code == 302
+    assert fake.signups[0]["options"]["data"]["phone"] == expected
+
+
+def test_register_city_must_belong_to_state(client, fake):
+    res = client.post("/cadastro", data={**BASE_REGISTER, "role": "cliente", "state": "RJ", "city": "São Paulo"})
+    assert res.status_code == 400 and not fake.signups
+    assert "Escolha uma cidade da lista" in res.get_data(as_text=True)
+    data = {**BASE_REGISTER, "role": "cliente", "state": "SP", "city": "Cidade Inexistente"}
+    res = client.post("/cadastro", data=data)
+    assert res.status_code == 400 and not fake.signups
+
+
+def test_register_city_is_normalized_to_official_name(client, fake):
+    res = client.post("/cadastro", data={**BASE_REGISTER, "role": "cliente", "state": "PR", "city": "foz do iguacu"})
+    assert res.status_code == 302
+    assert fake.signups[0]["options"]["data"]["city"] == "Foz do Iguaçu"
+
+
+def test_register_error_page_keeps_city_options_of_state(client):
+    html = client.post("/cadastro", data={**BASE_REGISTER, "role": "cliente", "terms": ""}).get_data(as_text=True)
+    assert '<option value="Campinas"' in html and "Escolha o estado primeiro" not in html
+
+
+def test_cities_endpoint(client):
+    res = client.get("/cidades/sp")
+    assert res.status_code == 200 and "São Paulo" in res.get_json() and len(res.get_json()) == 645
+    assert "max-age" in res.headers["Cache-Control"]
+    assert client.get("/cidades/XX").status_code == 404
+    assert client.get("/cidades/DF").get_json() == ["Brasília"]
 
 
 def test_register_page_has_place_and_oab_fields(client):

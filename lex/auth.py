@@ -1,5 +1,4 @@
 """Autenticação (Supabase Auth) e controle de acesso por papel."""
-import re
 import time
 from functools import wraps
 
@@ -18,14 +17,13 @@ from flask import (
 
 from supabase import AuthApiError
 
-from . import db, services
+from . import db, places, services
 from .constants import STATES
-from .utils import OAB_RE, normalize_oab
+from .utils import OAB_RE, clean_phone, normalize_oab, valid_email
 
 bp = Blueprint("auth", __name__)
 
 REGISTER_ROLES = ("cliente", "advogado")
-EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 # ---------- helpers ----------
@@ -148,7 +146,8 @@ def register():
         role = form.get("role")
         name = form.get("full_name", "").strip()
         email = form.get("email", "").strip().lower()
-        phone = form.get("phone", "").strip()
+        phone_raw = form.get("phone", "").strip()
+        phone = clean_phone(phone_raw) if phone_raw else ""
         password = form.get("password", "")
         state = form.get("state", "").strip().upper()
         city = " ".join(form.get("city", "").split())
@@ -159,12 +158,16 @@ def register():
             errors.append("Escolha se você é cliente ou advogado.")
         if len(name) < 3:
             errors.append("Informe seu nome completo.")
-        if not EMAIL_RE.match(email):
-            errors.append("Informe um e-mail válido.")
+        if not valid_email(email):
+            errors.append("Informe um e-mail válido, como nome@dominio.com.br.")
+        if phone is None:
+            errors.append("Informe um telefone válido com DDD, como (11) 91234-5678, ou deixe em branco.")
         if state not in STATES:
             errors.append("Selecione o seu estado.")
-        if not 2 <= len(city) <= 120:
-            errors.append("Informe a sua cidade.")
+        city_ok = places.canonical_city(state, city) if state in STATES else None
+        if state in STATES and not city_ok:
+            errors.append("Escolha uma cidade da lista do estado selecionado.")
+        city = city_ok or city
         if role == "advogado":
             if not OAB_RE.match(oab_number):
                 errors.append("Informe o número da sua OAB (somente números, ex.: 123456).")
@@ -179,7 +182,8 @@ def register():
         if errors:
             for message in errors:
                 flash(message, "error")
-            return render_template("auth/register.html", preset=role or preset, form=form), 400
+            cities = places.cities_for(state)
+            return render_template("auth/register.html", preset=role or preset, form=form, cities=cities), 400
 
         meta = {"role": role, "full_name": name, "phone": phone, "state": state, "city": city}
         if role == "advogado":
@@ -196,7 +200,8 @@ def register():
             else:
                 message = exc.message
             flash(f"Não foi possível concluir o cadastro: {message}", "error")
-            return render_template("auth/register.html", preset=role, form=form), 400
+            cities = places.cities_for(state)
+            return render_template("auth/register.html", preset=role, form=form, cities=cities), 400
 
         if res.session:  # confirmação de e-mail desligada no Supabase: já entra logado
             profile = services.get_profile(db.user_client(res.session.access_token), res.user.id)
