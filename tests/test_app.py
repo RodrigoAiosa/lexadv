@@ -502,3 +502,102 @@ def test_register_terms_checkbox_links_to_legal_pages(client):
     html = client.get("/cadastro").get_data(as_text=True)
     assert 'href="/termos"' in html
     assert 'href="/privacidade"' in html
+
+
+# ---------- recuperação de senha ----------
+def test_login_links_to_forgot_password(client):
+    assert 'href="/esqueci-senha"' in client.get("/login").get_data(as_text=True)
+
+
+def test_forgot_password_sends_link_and_hides_whether_account_exists(client, fake):
+    res = client.post("/esqueci-senha", data={"email": "Maria@Teste.com"})
+    assert res.status_code == 302 and res.headers["Location"].endswith("/login")
+    email, options = fake.resets[0]
+    assert email == "maria@teste.com"
+    assert options["redirect_to"].endswith("/redefinir-senha")
+
+
+def test_forgot_password_rejects_invalid_email(client, fake):
+    res = client.post("/esqueci-senha", data={"email": "isso não é e-mail"})
+    assert res.status_code == 400 and fake.resets == []
+
+
+def test_forgot_password_rate_limit_message(client, fake):
+    from supabase import AuthApiError
+
+    fake.reset_error = AuthApiError("rate limit", 429, "over_email_send_rate_limit")
+    res = client.post("/esqueci-senha", data={"email": "maria@teste.com"})
+    assert res.status_code == 429
+    assert "Muitos pedidos" in res.get_data(as_text=True)
+
+
+def test_forgot_password_other_errors_do_not_leak(client, fake):
+    from supabase import AuthApiError
+
+    fake.reset_error = AuthApiError("user not found", 400, "user_not_found")
+    res = client.post("/esqueci-senha", data={"email": "ninguem@teste.com"})
+    assert res.status_code == 302
+
+
+def test_reset_password_page_loads(client):
+    html = client.get("/redefinir-senha").get_data(as_text=True)
+    assert 'name="access_token"' in html and "reset.js" in html
+
+
+def test_reset_password_success(client, fake):
+    res = client.post(
+        "/redefinir-senha",
+        data={"access_token": "tok-link", "password": "novaSenha123", "password_confirm": "novaSenha123"},
+    )
+    assert res.status_code == 302 and res.headers["Location"].endswith("/login")
+    assert fake.password_updates == [("tok-link", "novaSenha123")]
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        {"access_token": "", "password": "novaSenha123", "password_confirm": "novaSenha123"},
+        {"access_token": "t", "password": "curta", "password_confirm": "curta"},
+        {"access_token": "t", "password": "novaSenha123", "password_confirm": "outraSenha123"},
+    ],
+)
+def test_reset_password_validation(client, fake, data):
+    res = client.post("/redefinir-senha", data=data)
+    assert res.status_code == 400 and fake.password_updates == []
+
+
+def test_reset_password_error_keeps_token_in_form(client, fake):
+    res = client.post(
+        "/redefinir-senha", data={"access_token": "t-123", "password": "abc", "password_confirm": "abc"}
+    )
+    assert 'value="t-123"' in res.get_data(as_text=True)
+
+
+def test_reset_password_expired_link(client, fake):
+    fake.password_result = (False, "Este link expirou ou já foi usado. Peça um novo link de recuperação.")
+    res = client.post(
+        "/redefinir-senha",
+        data={"access_token": "velho", "password": "novaSenha123", "password_confirm": "novaSenha123"},
+    )
+    assert res.status_code == 400 and "expirou" in res.get_data(as_text=True)
+
+
+@pytest.mark.parametrize(
+    ("status", "body", "expected"),
+    [
+        (200, {}, (True, "")),
+        (401, {}, (False, "expirou")),
+        (422, {"msg": "New password should be different from the old password."}, (False, "diferente")),
+        (422, {"msg": "Password should be at least 8 characters"}, (False, "mais forte")),
+    ],
+)
+def test_update_password_maps_supabase_errors(app, monkeypatch, status, body, expected):
+    import httpx
+
+    from lex import db
+
+    monkeypatch.undo()  # usa a função real (a fixture `fake` a trocou)
+    monkeypatch.setattr(httpx, "put", lambda *a, **k: httpx.Response(status, json=body))
+    with app.app_context():
+        ok, message = db.update_password("tok", "senhaNova1")
+    assert ok is expected[0] and expected[1] in message

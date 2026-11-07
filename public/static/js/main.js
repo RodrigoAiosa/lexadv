@@ -2,6 +2,12 @@
 (function () {
   "use strict";
 
+  // Link de recuperação de senha que caiu em outra página (se a URL não estiver liberada no Supabase).
+  if (window.location.hash.indexOf("type=recovery") !== -1 && window.location.pathname !== "/redefinir-senha") {
+    window.location.replace("/redefinir-senha" + window.location.hash);
+    return;
+  }
+
   // Menu mobile
   var toggle = document.querySelector("[data-nav-toggle]");
   var menu = document.getElementById("menu");

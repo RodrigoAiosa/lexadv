@@ -31,8 +31,9 @@ def fake(monkeypatch):
         {"id": 1, "slug": "trabalhista", "name": "Direito Trabalhista", "description": "Rescisão", "is_active": True},
         {"id": 2, "slug": "civil", "name": "Direito Civil", "description": "Contratos", "is_active": True},
     )
-    monkeypatch.setattr(db, "anon_client", lambda: fake_db)
+    monkeypatch.setattr(db, "anon_client", lambda **_: fake_db)
     monkeypatch.setattr(db, "user_client", lambda _token: fake_db)
+    monkeypatch.setattr(db, "update_password", fake_db.update_password)
     return fake_db
 
 

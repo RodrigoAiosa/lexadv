@@ -155,6 +155,11 @@ class FakeAuth:
         self.db.signups.append(data)
         return SimpleNamespace(session=None, user=SimpleNamespace(id=str(uuid.uuid4()), email=data["email"]))
 
+    def reset_password_for_email(self, email, options=None):
+        self.db.resets.append((email, options))
+        if self.db.reset_error:
+            raise self.db.reset_error
+
     def refresh_session(self, _token):
         return SimpleNamespace(
             session=SimpleNamespace(access_token="tok2", refresh_token="ref2", expires_at=9999999999)
@@ -166,11 +171,19 @@ class FakeDB:
         self.tables = {}
         self.users = {}
         self.signups = []
+        self.resets = []
+        self.reset_error = None
+        self.password_updates = []
+        self.password_result = (True, "")
         self.rpc_calls = []
         self.rpc_returns = {}
         self.uploads = {}
         self.auth = FakeAuth(self)
         self.storage = FakeStorage(self)
+
+    def update_password(self, token, password):
+        self.password_updates.append((token, password))
+        return self.password_result
 
     def table(self, name):
         return FakeQuery(self, name)

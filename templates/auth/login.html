@@ -14,6 +14,7 @@
         <label class="field">
           <span>Senha</span>
           <input type="password" name="password" autocomplete="current-password" required>
+          <small><a href="{{ url_for('auth.forgot_password') }}">Esqueci minha senha</a></small>
         </label>
         <button class="btn btn--navy btn--block" type="submit">Entrar</button>
       </form>

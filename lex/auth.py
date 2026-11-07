@@ -213,6 +213,57 @@ def register():
     return render_template("auth/register.html", preset=preset, form={})
 
 
+@bp.route("/esqueci-senha", methods=["GET", "POST"])
+def forgot_password():
+    if current_user():
+        return redirect(url_for(home_for(current_user()["role"])))
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        if not valid_email(email):
+            flash("Informe um e-mail válido, como nome@dominio.com.br.", "error")
+            return render_template("auth/forgot_password.html", email=email), 400
+        site = current_app.config.get("SITE_URL") or request.url_root.rstrip("/")
+        try:
+            db.anon_client(flow_type="implicit").auth.reset_password_for_email(
+                email, {"redirect_to": f"{site}/redefinir-senha"}
+            )
+        except AuthApiError as exc:
+            if exc.status == 429:
+                flash("Muitos pedidos seguidos. Aguarde alguns minutos e tente de novo.", "warning")
+                return render_template("auth/forgot_password.html", email=email), 429
+            current_app.logger.warning("reset_password_for_email falhou: %s", exc)
+        # Mesma resposta exista ou não a conta: não revela quais e-mails estão cadastrados.
+        flash("Se esse e-mail estiver cadastrado, enviamos um link para criar uma nova senha.", "success")
+        return redirect(url_for("auth.login"))
+    return render_template("auth/forgot_password.html", email="")
+
+
+@bp.route("/redefinir-senha", methods=["GET", "POST"])
+def reset_password():
+    """Destino do link do e-mail. O token chega no fragmento (#) da URL; o JavaScript o põe no formulário."""
+    if request.method == "POST":
+        token = request.form.get("access_token", "").strip()
+        password = request.form.get("password", "")
+        error = None
+        if not token:
+            error = "Link inválido. Peça um novo link de recuperação."
+        elif len(password) < 8:
+            error = "A senha deve ter pelo menos 8 caracteres."
+        elif password != request.form.get("password_confirm", ""):
+            error = "As senhas não conferem."
+        if error:
+            flash(error, "error")
+            return render_template("auth/reset_password.html", token=token), 400
+        ok, message = db.update_password(token, password)
+        if not ok:
+            flash(message, "error")
+            return render_template("auth/reset_password.html", token=token), 400
+        session.clear()
+        flash("Senha alterada! Entre com a nova senha.", "success")
+        return redirect(url_for("auth.login"))
+    return render_template("auth/reset_password.html")
+
+
 @bp.route("/sair", methods=["POST"])
 def logout():
     session.clear()
