@@ -2,12 +2,16 @@
 
 Desenvolvimento:  python app.py
 Produção:         gunicorn app:app
+Vercel:           detecta o objeto `app` deste arquivo (precisa instanciar Flask aqui).
 """
 import os
 
-from lex import create_app
+from flask import Flask
 
-app = create_app()
+from lex import configure_app
+
+app = Flask(__name__, template_folder="templates", static_folder="public/static")
+configure_app(app)
 
 if __name__ == "__main__":
     app.run(

@@ -13,7 +13,16 @@ csrf = CSRFProtect()
 
 
 def create_app(config_object=None):
+    """Cria e configura o app (usado pelos testes)."""
     app = Flask(__name__, template_folder="../templates", static_folder="../public/static")
+    return configure_app(app, config_object)
+
+
+def configure_app(app, config_object=None):
+    """Aplica configuração, extensões, blueprints e tratadores de erro a um Flask já criado.
+
+    Em `app.py` o objeto Flask é criado explicitamente (a Vercel só reconhece o app assim) e passa por aqui.
+    """
     app.config.from_object(config_object or Config)
 
     if app.config["APP_ENV"] == "production" and not app.testing:
