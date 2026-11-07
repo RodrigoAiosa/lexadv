@@ -37,6 +37,7 @@
             Notificações <span class="pill" data-notifications-badge hidden>0</span>
           </a>
           <span class="nav-user">{{ user.full_name or user.email }}</span>
+          <a href="{{ url_for('auth.change_password') }}">Alterar senha</a>
           <form method="post" action="{{ url_for('auth.logout') }}" class="inline-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="btn btn--ghost btn--sm" type="submit">Sair</button>

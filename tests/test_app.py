@@ -601,3 +601,46 @@ def test_update_password_maps_supabase_errors(app, monkeypatch, status, body, ex
     with app.app_context():
         ok, message = db.update_password("tok", "senhaNova1")
     assert ok is expected[0] and expected[1] in message
+
+
+# ---------- alterar senha (logado) ----------
+def test_change_password_requires_login(client):
+    assert client.get("/alterar-senha").status_code == 302
+
+
+def test_change_password_success(client, fake, login):
+    login("cliente")
+    fake.users["cliente@teste.com"] = {"id": CLIENT_ID, "password": "senhaAtual1"}
+    res = client.post(
+        "/alterar-senha",
+        data={"current_password": "senhaAtual1", "password": "senhaNova12", "password_confirm": "senhaNova12"},
+    )
+    assert res.status_code == 302
+    assert fake.password_updates == [("tok", "senhaNova12")]
+
+
+def test_change_password_wrong_current(client, fake, login):
+    login("cliente")
+    fake.users["cliente@teste.com"] = {"id": CLIENT_ID, "password": "senhaAtual1"}
+    res = client.post(
+        "/alterar-senha",
+        data={"current_password": "errada123", "password": "senhaNova12", "password_confirm": "senhaNova12"},
+    )
+    assert res.status_code == 400 and fake.password_updates == []
+    assert "senha atual está incorreta" in res.get_data(as_text=True)
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        {"current_password": "", "password": "senhaNova12", "password_confirm": "senhaNova12"},
+        {"current_password": "senhaAtual1", "password": "curta", "password_confirm": "curta"},
+        {"current_password": "senhaAtual1", "password": "senhaNova12", "password_confirm": "diferente12"},
+        {"current_password": "senhaAtual1", "password": "senhaAtual1", "password_confirm": "senhaAtual1"},
+    ],
+)
+def test_change_password_validation(client, fake, login, data):
+    login("cliente")
+    fake.users["cliente@teste.com"] = {"id": CLIENT_ID, "password": "senhaAtual1"}
+    assert client.post("/alterar-senha", data=data).status_code == 400
+    assert fake.password_updates == []

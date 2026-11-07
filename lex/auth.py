@@ -264,6 +264,38 @@ def reset_password():
     return render_template("auth/reset_password.html")
 
 
+@bp.route("/alterar-senha", methods=["GET", "POST"])
+@login_required
+def change_password():
+    """Troca de senha de quem está logado: senha atual + nova senha + confirmação."""
+    if request.method == "POST":
+        current = request.form.get("current_password", "")
+        password = request.form.get("password", "")
+        error = None
+        if not current:
+            error = "Informe a senha atual."
+        elif len(password) < 8:
+            error = "A nova senha deve ter pelo menos 8 caracteres."
+        elif password != request.form.get("password_confirm", ""):
+            error = "As senhas não conferem."
+        elif password == current:
+            error = "A nova senha precisa ser diferente da atual."
+        if not error:
+            try:  # confere a senha atual antes de aceitar a troca
+                db.anon_client().auth.sign_in_with_password({"email": current_user()["email"], "password": current})
+            except AuthApiError:
+                error = "A senha atual está incorreta."
+        if not error:
+            ok, message = db.update_password(session["access_token"], password)
+            if ok:
+                flash("Senha alterada com sucesso.", "success")
+                return redirect(url_for(home_for(current_user()["role"])))
+            error = message
+        flash(error, "error")
+        return render_template("auth/change_password.html"), 400
+    return render_template("auth/change_password.html")
+
+
 @bp.route("/sair", methods=["POST"])
 def logout():
     session.clear()
