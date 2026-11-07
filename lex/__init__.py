@@ -13,7 +13,7 @@ csrf = CSRFProtect()
 
 
 def create_app(config_object=None):
-    app = Flask(__name__, template_folder="../templates", static_folder="../static")
+    app = Flask(__name__, template_folder="../templates", static_folder="../public/static")
     app.config.from_object(config_object or Config)
 
     if app.config["APP_ENV"] == "production" and not app.testing:

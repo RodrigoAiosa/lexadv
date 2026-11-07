@@ -27,7 +27,7 @@ lexadv/
 │   ├── constants.py        # rótulos em português e listas (UFs, status…)
 │   └── blueprints/         # main, client, lawyer, cases, api, admin
 ├── templates/              # index.html, base.html e telas (Jinja2)
-├── static/                 # css/style.css, js/main.js, js/chat.js, img/
+├── public/static/          # css/style.css, js/main.js, js/chat.js, img/ (servidos em /static)
 ├── supabase/migrations/    # SQL do banco (tabelas, triggers, RLS, storage)
 ├── tests/                  # pytest com Supabase simulado em memória
 ├── Dockerfile · Procfile   # deploy
@@ -103,7 +103,7 @@ docker build -t lexadv .
 docker run -p 8000:8000 --env-file .env lexadv
 ```
 
-**Vercel:** o `vercel.json` já aponta o `app.py` para o runtime Python da Vercel. Importe o repositório e, em
+**Vercel:** o `vercel.json` (framework Flask) e o `[tool.vercel]` do `pyproject.toml` apontam para `app:app`; os arquivos estáticos ficam em `public/static` para serem servidos pela CDN. Importe o repositório e, em
 *Settings → Environment Variables*, defina `SECRET_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`, `APP_ENV=production` e
 `SITE_URL` (ex.: `https://lexadv-lex.vercel.app`); depois faça um novo deploy. Para o site abrir ao público em
 `*.vercel.app`, desative *Settings → Deployment Protection → Vercel Authentication* (ou use um domínio próprio).

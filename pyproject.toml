@@ -3,6 +3,15 @@ name = "lexadv"
 version = "0.1.0"
 description = "LEX — plataforma que conecta clientes a advogados especialistas"
 requires-python = ">=3.10"
+dependencies = [
+    "Flask>=3.0,<4.0",
+    "Flask-WTF>=1.2,<2.0",
+    "supabase>=2.10,<3.0",
+    "python-dotenv>=1.0,<2.0",
+]
+
+[tool.vercel]
+entrypoint = "app:app"
 
 [tool.ruff]
 line-length = 120
