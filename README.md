@@ -103,6 +103,12 @@ docker build -t lexadv .
 docker run -p 8000:8000 --env-file .env lexadv
 ```
 
+**Vercel:** o `vercel.json` já aponta o `app.py` para o runtime Python da Vercel. Importe o repositório e, em
+*Settings → Environment Variables*, defina `SECRET_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`, `APP_ENV=production` e
+`SITE_URL` (ex.: `https://lexadv-lex.vercel.app`); depois faça um novo deploy. Para o site abrir ao público em
+`*.vercel.app`, desative *Settings → Deployment Protection → Vercel Authentication* (ou use um domínio próprio).
+No Supabase (*Authentication → URL Configuration*), inclua o endereço do site em *Site URL* e *Redirect URLs*.
+
 **Render / Railway / Heroku:** o `Procfile` já executa `gunicorn app:app`. Defina as variáveis de ambiente do
 quadro acima (com `APP_ENV=production`). O endpoint `/healthz` serve para o health check.
 
